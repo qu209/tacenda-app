@@ -4585,11 +4585,11 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       document.documentElement.classList.add('cap-app');
     }
 
-    // iOS WKWebView 键盘修复：让 chatbar 跟着键盘上移，顶栏固定不动
+    // iOS WKWebView 键盘修复
     var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     if (isIOS) {
-      // 始终归零 window 滚动，防止页面被抬起
-      var scrollFixInterval = setInterval(function() {
+      // 防止 window 整体被推上去
+      setInterval(function() {
         if (window.scrollY !== 0 || window.pageYOffset !== 0) {
           window.scrollTo(0, 0);
         }
@@ -4597,43 +4597,56 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
 
       document.addEventListener('focusout', function() {
         setTimeout(function() { window.scrollTo(0, 0); }, 50);
-        setTimeout(function() { window.scrollTo(0, 0); }, 200);
+        setTimeout(function() { window.scrollTo(0, 0); }, 300);
       }, true);
 
-      // 核心：用 visualViewport 监听键盘高度，动态调整 chatbar 和 chatBody
       if (window.visualViewport) {
+        var lastKeyboardHeight = 0;
+
         function onViewportChange() {
           window.scrollTo(0, 0);
           var vv = window.visualViewport;
-          var windowHeight = window.innerHeight;
-          var viewportHeight = vv.height;
-          var keyboardHeight = windowHeight - viewportHeight - vv.offsetTop;
-          if (keyboardHeight < 0) keyboardHeight = 0;
+          var keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
+          if (keyboardHeight < 50) keyboardHeight = 0; // 小于50px忽略，避免抖动
 
-          // 找到当前聊天页面的 chatbar 和 chatBody
+          if (keyboardHeight === lastKeyboardHeight) return;
+          lastKeyboardHeight = keyboardHeight;
+
+          // 只对聊天页面的 chatbar/chatBody 做处理
           var chatbar = document.querySelector('.chat-screen.active .chatbar');
           var chatBody = document.querySelector('.chat-screen.active .chat-body');
           var multiBar = document.querySelector('.chat-screen.active .multi-select-bar');
 
           if (chatbar) {
+            chatbar.style.transition = 'transform 0.25s ease';
             chatbar.style.transform = keyboardHeight > 0
-              ? 'translateY(-' + keyboardHeight + 'px)'
-              : '';
+              ? 'translateY(-' + keyboardHeight + 'px)' : '';
           }
           if (chatBody) {
+            chatBody.style.transition = 'bottom 0.25s ease';
             chatBody.style.bottom = keyboardHeight > 0
-              ? (68 + keyboardHeight) + 'px'
-              : '';
+              ? (68 + keyboardHeight) + 'px' : '';
             if (keyboardHeight > 0) {
               setTimeout(function() {
                 chatBody.scrollTop = chatBody.scrollHeight;
-              }, 50);
+              }, 80);
             }
           }
           if (multiBar) {
+            multiBar.style.transition = 'transform 0.25s ease';
             multiBar.style.transform = keyboardHeight > 0
-              ? 'translateY(-' + keyboardHeight + 'px)'
-              : '';
+              ? 'translateY(-' + keyboardHeight + 'px)' : '';
+          }
+
+          // 弹窗类输入框：让元素滚动到视口内，不移动整个页面
+          var activeEl = document.activeElement;
+          if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+            var inChatbar = chatbar && chatbar.contains(activeEl);
+            if (!inChatbar && keyboardHeight > 0) {
+              setTimeout(function() {
+                activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 100);
+            }
           }
         }
 
@@ -5282,7 +5295,7 @@ function estimateTokens(text) {
       modalMask.classList.add("show");
       addRoleBtn.classList.add("open");
       modalError.textContent = "";
-      setTimeout(() => remarkInput.focus(), 20);
+      // 不自动 focus，避免弹窗弹出时自动唤起键盘
     }
 
     function closeAddModal() {
@@ -5350,7 +5363,7 @@ function estimateTokens(text) {
       tabbar.classList.add("hidden");
 
       renderChat();
-      setTimeout(() => chatInput.focus(), 30);
+      // 不自动 focus，避免进入聊天页面自动弹出键盘
     }
 
     function backToFriends() {
