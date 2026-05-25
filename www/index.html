@@ -21,8 +21,8 @@
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     html.cap-app .tabbar {
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      height: calc(60px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      height: calc(50px + env(safe-area-inset-bottom, 0px));
     }
     html.cap-app .chatbar-inner {
       padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
@@ -525,8 +525,8 @@
       right: 0;
       bottom: 0;
       z-index: 10;
-      height: 60px; /* 固定整体小高度 */
-      padding-bottom: 10px; /* 仅给下方留一点点自然缝隙，消灭巨型白条 */
+      height: calc(50px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       background: #fff;
@@ -4578,50 +4578,64 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
   <script>
     // ====== Capacitor APP 环境检测与修复 ======
   (function() {
-    // 检测是否在 Capacitor 环境中运行
-    var isCap = window.Capacitor || navigator.userAgent.includes('Capacitor');
-    if (isCap || !window.navigator.standalone && !/safari/i.test(navigator.userAgent)) {
+    // 检测是否在 IPA/原生WebView 环境（非 Safari 浏览器、非 PWA standalone）
+    var isCap = !!(window.Capacitor);
+    var isNativeWebView = !window.navigator.standalone && !/safari/i.test(navigator.userAgent) && /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isCap || isNativeWebView) {
       document.documentElement.classList.add('cap-app');
     }
-    
-    // 修复 Capacitor 中键盘弹出时页面被推上去的问题
-    if (window.Capacitor) {
-      // 阻止 iOS WebView 自动滚动到输入框
+
+    // 强力修复 iOS WebView/IPA 键盘弹出时整个页面被抬起的问题
+    // 适用于 Capacitor IPA / WKWebView 签名安装场景
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isIOS) {
+      // 持续将 window 滚动归零（键盘弹出时 iOS 会自动滚动 window）
+      var scrollFixInterval = setInterval(function() {
+        if (window.scrollY !== 0 || window.pageYOffset !== 0) {
+          window.scrollTo(0, 0);
+        }
+      }, 100);
+
+      // focus 时：归零 window 滚动，只允许聊天区域内部滚动
       document.addEventListener('focusin', function(e) {
         var tag = e.target.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') {
-          // 延迟一下让键盘先弹出来
           setTimeout(function() {
-            // 只滚动聊天区域，不滚动整个页面
+            window.scrollTo(0, 0);
             var chatBody = document.getElementById('chatBody');
             if (chatBody && chatBody.offsetParent !== null) {
               chatBody.scrollTop = chatBody.scrollHeight;
             }
-            // 阻止 window 级别的滚动
+          }, 100);
+          setTimeout(function() {
             window.scrollTo(0, 0);
-          }, 300);
+          }, 400);
         }
-      });
-      
-      // 键盘收起时恢复位置
+      }, true);
+
+      // blur 时：归零 window 滚动
       document.addEventListener('focusout', function() {
         setTimeout(function() {
           window.scrollTo(0, 0);
-        }, 100);
-      });
-      
-      // 持续监听并修正 window 滚动（防止被键盘推上去）
-      var fixScrollInterval = setInterval(function() {
-        if (window.scrollY !== 0) {
+        }, 50);
+        setTimeout(function() {
           window.scrollTo(0, 0);
-        }
-      }, 500);
+        }, 200);
+      }, true);
+
+      // 监听 visualViewport 变化（键盘弹出/收起）
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() {
+          window.scrollTo(0, 0);
+        });
+        window.visualViewport.addEventListener('scroll', function() {
+          window.scrollTo(0, 0);
+        });
+      }
     }
-    
-    // 设置 iOS WebView 语言为中文
-    if (document.documentElement) {
-      document.documentElement.lang = 'zh-CN';
-    }
+
+    // 设置 iOS WebView 语言为中文（修复长按菜单英文问题）
+    document.documentElement.lang = 'zh-CN';
   })();
 
   // ====== 全局图片压缩工具函数 ======
