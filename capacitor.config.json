@@ -2,6 +2,7 @@
   "appId": "com.tacenda.app",
   "appName": "Tacenda",
   "webDir": "www",
+  "appVersion": "1.1.0",
   "server": {
     "androidScheme": "https",
     "iosScheme": "https",
