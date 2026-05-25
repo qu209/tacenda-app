@@ -35,13 +35,17 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS=""
 
-      - name: Package IPA
+      - name: Find and package IPA
         run: |
           cd ios/App
+          APP_PATH=$(find build/App.xcarchive -name "*.app" -type d | head -1)
+          echo "Found app at: $APP_PATH"
           mkdir -p build/Payload
-          cp -r build/App.xcarchive/Products/Applications/App.app build/Payload/
+          cp -r "$APP_PATH" build/Payload/
           cd build
           zip -r ../Tacenda.ipa Payload
+          echo "IPA created successfully"
+          ls -la ../Tacenda.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
