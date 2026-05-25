@@ -17,20 +17,14 @@ jobs:
       - name: Install and sync
         run: |
           npm install
-          npm install @capacitor/keyboard
           npx cap add ios
           npx cap sync ios
 
-      - name: Configure iOS project
+      - name: Set version number
         run: |
-          cd ios/App
-          # 设置版本号
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.1.0" App/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" App/Info.plist
-          # 设置语言为中文
-          /usr/libexec/PlistBuddy -c "Add :CFBundleDevelopmentRegion string zh_CN" App/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :CFBundleDevelopmentRegion zh_CN" App/Info.plist
-          /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations array" App/Info.plist 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations:0 string zh-Hans" App/Info.plist 2>/dev/null || true
+          cd ios/App/App
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.1.0" Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" Info.plist
 
       - name: Build unsigned app
         run: |
