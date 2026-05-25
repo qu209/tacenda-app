@@ -1,0 +1,11 @@
+{
+  "appId": "com.tacenda.app",
+  "appName": "Tacenda",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}
