@@ -21,10 +21,13 @@ jobs:
           npx cap add ios
           npx cap sync ios
 
-      - name: Configure iOS project language
+      - name: Configure iOS project
         run: |
           cd ios/App
-          # 设置 Info.plist 语言为中文
+          # 设置版本号
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.1.0" App/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" App/Info.plist
+          # 设置语言为中文
           /usr/libexec/PlistBuddy -c "Add :CFBundleDevelopmentRegion string zh_CN" App/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :CFBundleDevelopmentRegion zh_CN" App/Info.plist
           /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations array" App/Info.plist 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations:0 string zh-Hans" App/Info.plist 2>/dev/null || true
