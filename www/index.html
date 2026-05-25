@@ -14,6 +14,32 @@
   <meta name="apple-mobile-web-app-title" content="Tacenda" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#111111" />
+    <meta name="format-detection" content="telephone=no" />
+  <style>
+    /* Capacitor APP 专用修复 */
+    html.cap-app {
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    html.cap-app .tabbar {
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      height: calc(60px + env(safe-area-inset-bottom, 0px));
+    }
+    html.cap-app .chatbar-inner {
+      padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    }
+    html.cap-app .chat-body {
+      bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    }
+    html.cap-app #screen-settings .chat-body {
+      bottom: 0;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+    html.cap-app .multi-select-bar {
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      height: calc(68px + env(safe-area-inset-bottom, 0px));
+    }
+  </style>
+
   <script>
     // 动态生成 manifest（因为是单HTML文件，无法引用外部json）
     const manifestData = {
@@ -3221,7 +3247,22 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     }
 
   </style>
-  
+    <script>
+    // Capacitor 键盘插件：阻止键盘推动 WebView
+    window.addEventListener('load', function() {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Keyboard) {
+        var Keyboard = window.Capacitor.Plugins.Keyboard;
+        Keyboard.setResizeMode && Keyboard.setResizeMode({ mode: 'none' });
+        Keyboard.setScroll && Keyboard.setScroll({ isDisabled: true });
+      }
+      // 强制 viewport 不被键盘影响
+      var vp = document.querySelector('meta[name="viewport"]');
+      if (vp) {
+        vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover, interactive-widget=resizes-content';
+      }
+    });
+  </script>
+
 </head>
 <body>
   <div class="app">
@@ -4535,6 +4576,54 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
   </div>
 
   <script>
+    // ====== Capacitor APP 环境检测与修复 ======
+  (function() {
+    // 检测是否在 Capacitor 环境中运行
+    var isCap = window.Capacitor || navigator.userAgent.includes('Capacitor');
+    if (isCap || !window.navigator.standalone && !/safari/i.test(navigator.userAgent)) {
+      document.documentElement.classList.add('cap-app');
+    }
+    
+    // 修复 Capacitor 中键盘弹出时页面被推上去的问题
+    if (window.Capacitor) {
+      // 阻止 iOS WebView 自动滚动到输入框
+      document.addEventListener('focusin', function(e) {
+        var tag = e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') {
+          // 延迟一下让键盘先弹出来
+          setTimeout(function() {
+            // 只滚动聊天区域，不滚动整个页面
+            var chatBody = document.getElementById('chatBody');
+            if (chatBody && chatBody.offsetParent !== null) {
+              chatBody.scrollTop = chatBody.scrollHeight;
+            }
+            // 阻止 window 级别的滚动
+            window.scrollTo(0, 0);
+          }, 300);
+        }
+      });
+      
+      // 键盘收起时恢复位置
+      document.addEventListener('focusout', function() {
+        setTimeout(function() {
+          window.scrollTo(0, 0);
+        }, 100);
+      });
+      
+      // 持续监听并修正 window 滚动（防止被键盘推上去）
+      var fixScrollInterval = setInterval(function() {
+        if (window.scrollY !== 0) {
+          window.scrollTo(0, 0);
+        }
+      }, 500);
+    }
+    
+    // 设置 iOS WebView 语言为中文
+    if (document.documentElement) {
+      document.documentElement.lang = 'zh-CN';
+    }
+  })();
+
   // ====== 全局图片压缩工具函数 ======
 function compressImageBase64(base64, maxWidth = 1024, quality = 0.8) {
   return new Promise((resolve) => {
