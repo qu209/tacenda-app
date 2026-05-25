@@ -2,23 +2,10 @@
   "appId": "com.tacenda.app",
   "appName": "Tacenda",
   "webDir": "www",
-  "appVersion": "1.1.0",
   "server": {
-    "androidScheme": "https",
-    "iosScheme": "https",
-    "allowNavigation": ["*"]
+    "androidScheme": "https"
   },
   "ios": {
-    "contentInset": "automatic",
-    "allowsLinkPreview": false,
-    "scrollEnabled": false,
-    "limitsNavigationsToAppBoundDomains": false,
-    "preferredContentMode": "mobile"
-  },
-  "plugins": {
-    "Keyboard": {
-      "resize": "none",
-      "resizeOnFullScreen": false
-    }
+    "contentInset": "always"
   }
 }
