@@ -17,8 +17,17 @@ jobs:
       - name: Install and sync
         run: |
           npm install
+          npm install @capacitor/keyboard
           npx cap add ios
           npx cap sync ios
+
+      - name: Configure iOS project language
+        run: |
+          cd ios/App
+          # 设置 Info.plist 语言为中文
+          /usr/libexec/PlistBuddy -c "Add :CFBundleDevelopmentRegion string zh_CN" App/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :CFBundleDevelopmentRegion zh_CN" App/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations array" App/Info.plist 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations:0 string zh-Hans" App/Info.plist 2>/dev/null || true
 
       - name: Build unsigned app
         run: |
@@ -49,4 +58,3 @@ jobs:
           name: Tacenda-IPA
           path: ios/App/Tacenda.ipa
           retention-days: 90
-
