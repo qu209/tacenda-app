@@ -3,9 +3,21 @@
   "appName": "Tacenda",
   "webDir": "www",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "allowNavigation": ["*"]
   },
   "ios": {
-    "contentInset": "always"
+    "contentInset": "automatic",
+    "allowsLinkPreview": false,
+    "scrollEnabled": false,
+    "limitsNavigationsToAppBoundDomains": false,
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "none",
+      "resizeOnFullScreen": false
+    }
   }
 }
